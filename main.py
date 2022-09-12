@@ -160,31 +160,39 @@ WHITE = (255, 255, 255)
 
 
 class Colors:
-    RES_X = 800
+    RES_X = 790
     RES_Y = 600
-    FONTSIZE = 16
+    FONTSIZE = 20
     BORDSIZE = 2
-    colors_names: list  # По сути, имена всех глобальных констант модуля
     fontsurfs: List[pg.Surface]
     colsurfs: List[pg.Rect]
     max_fontsize_x: int
     max_fontsize_y: int
+    colors: dict  # """{str: [(int, int, int), pg.Surface фон, pg.Surface надпись)]}"""
+    COLVAL, BGSURF, FONTSURF = 0, 1, 2  # позиции в основном словаре colors
+    fonts_areas: list  # прямоугольники для областей в которых выводится цвет на подложке, для реакции на мышь
 
     def __init__(self):
-        self.colors_names = [name for name in globals().keys() if name.isupper()]
+        self.colors = {}
+        for var in globals():
+            if var.isupper():
+                self.colors[var] = [globals()[var], None, None]
+
         pg.init()
 
         self.font = pg.font.Font(None, self.FONTSIZE)
-
+        self.fonts_areas = []
         self.mscr = pg.display.set_mode((self.RES_X, self.RES_Y))
         pg.display.set_caption('Примеры цветов модуля')
         self.fontsurfs, self.colsurfs = [], []
         self.max_fontsize_x, self.max_fontsize_y = self.__render_colnames()
+        self._init_colrects()
+        self._render_colors()
 
     def __render_colnames(self) -> tuple:
         """ Рендерит названия цветов в список и возвращает максимальный необходимый размер в пикселях """
         maxx, maxy = 0, 0
-        for colname in self.colors_names:
+        for colname in self.colors.keys():
             bgcol = globals()[colname]
             curname = self.font.render(colname.capitalize(), True,
                                        self._get_opposite_color(bgcol), bgcol)
@@ -199,27 +207,30 @@ class Colors:
         res = tuple([255 - v for v in inp_tuple])
         return res
 
-    def _render_colrects(self):
-        for clr in self.colors_names:
-            csurf = pg.Surface(self.max_fontsize_x + self.BORDSIZE * 2,
-                               self.max_fontsize_y + self.BORDSIZE * 2).fill(globals()[clr])
-
-
-    def _show_colors(self):
-        curx, cury, lastx, lasty = 0, 0, 0, 0
-        for sf in self.fontsurfs:
-            if curx + lastx > self.RES_X:
+    def _init_colrects(self):
+        curx, cury = 0, 0
+        for clr in self.colors.keys():
+            r = pg.Rect(curx, cury, self.max_fontsize_x, self.max_fontsize_y + self.BORDSIZE * 2)
+            self.colors[clr][self.BGSURF] = r
+            if curx + self.max_fontsize_x + self.BORDSIZE > self.RES_X:
                 curx = 0
-                cury = cury + self.FONTSIZE
+                cury += self.max_fontsize_y
             else:
-                curx += lastx
-            self.mscr.blit(sf, (curx, cury))
-            lastx, lasty = sf.get_size()
-            pg.display.update()
+                curx += self.max_fontsize_x
 
-    def show_by_pygame(self):
+    def _render_colors(self):
+        for cl in self.colors:
+            rct = self.colors[cl][self.BGSURF]
+            surf = pg.Surface(rct.size)
+            surf.fill(globals()[cl])
+            self.mscr.blit(surf, rct.topleft)
+
+
+
+    def show(self):
         running = True
-        self._show_colors()
+        self._render_colors()
+        pg.display.update()
         while running:
             for ev in pg.event.get():
                 if ev.type == pg.QUIT:
@@ -230,4 +241,4 @@ class Colors:
 
 if __name__ == '__main__':
     clrs = Colors()
-    clrs.show_by_pygame()
+    clrs.show()
