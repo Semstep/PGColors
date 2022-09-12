@@ -1,20 +1,4 @@
 import pygame as pg
-# class Colors:
-# """Переделать файл со строками вида 'DarkBlue	#00008B' в строки вида 'DARKBLUE = (0, 0, 139)' """
-#     def __init__(self):
-#         FILENAME = 'colors.txt'
-#         OUTFILE = 'copypaste_colors.txt'
-#
-#         colors = dict()
-#         with open(FILENAME) as colfile, open(OUTFILE, 'w', encoding='utf8') as outfile:
-#             for l in colfile.readlines():
-#                 col_val = l.strip().split('\t')
-#                 name, val = col_val[0], col_val[1].strip('#')
-#                 globals()[name.upper()] = [int(val[s: s+2], base=16) for s in range(0, 6, 2)]
-#                 print(f'{name.upper()} = {tuple([int(val[s: s+2], base=16) for s in range(0, 6, 2)])}', file=outfile)
-#         print('Constants for Colors was added')
-#
-# cc = Colors()
 from typing import List
 
 BLACK = (0, 0, 0)
@@ -162,7 +146,7 @@ WHITE = (255, 255, 255)
 class Colors:
     RES_X = 800
     RES_Y = 600
-    FONTSIZE = 20
+    FONTSIZE = 21
     BORDSIZE = 2
     fontsurfs: List[pg.Surface]
     colsurfs: List[pg.Rect]
@@ -197,8 +181,10 @@ class Colors:
             curname = self.font.render(colname.capitalize(), True,
                                        self._get_opposite_color(bgcol), bgcol)
             curx, cury = curname.get_size()
-            if maxx < curx: maxx = curx
-            if maxy < cury: maxy = cury
+            if maxx < curx:
+                maxx = curx
+            if maxy < cury:
+                maxy = cury
             self.fontsurfs.append(curname)
         return maxx, maxy
 
@@ -224,8 +210,6 @@ class Colors:
             surf = pg.Surface(rct.size)
             surf.fill(globals()[cl])
             self.mscr.blit(surf, rct.topleft)
-
-
 
     def show(self):
         running = True
