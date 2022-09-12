@@ -160,7 +160,7 @@ WHITE = (255, 255, 255)
 
 
 class Colors:
-    RES_X = 790
+    RES_X = 800
     RES_Y = 600
     FONTSIZE = 20
     BORDSIZE = 2
@@ -208,15 +208,15 @@ class Colors:
         return res
 
     def _init_colrects(self):
-        curx, cury = 0, 0
+        curx, cury = self.BORDSIZE, self.BORDSIZE
         for clr in self.colors.keys():
-            r = pg.Rect(curx, cury, self.max_fontsize_x, self.max_fontsize_y + self.BORDSIZE * 2)
+            r = pg.Rect(curx, cury, self.max_fontsize_x, self.max_fontsize_y)
             self.colors[clr][self.BGSURF] = r
-            if curx + self.max_fontsize_x + self.BORDSIZE > self.RES_X:
-                curx = 0
-                cury += self.max_fontsize_y
+            if curx + self.max_fontsize_x * 2 + self.BORDSIZE * 2 > self.RES_X:
+                curx = self.BORDSIZE
+                cury += self.max_fontsize_y + self.BORDSIZE
             else:
-                curx += self.max_fontsize_x
+                curx += self.max_fontsize_x + self.BORDSIZE
 
     def _render_colors(self):
         for cl in self.colors:
