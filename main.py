@@ -144,16 +144,13 @@ WHITE = (255, 255, 255)
 
 
 class Colors:
-    """
-
-    """
-    res_x = 800
+    res_x = 800  # Разрешение основного окна по Х пересчитывается в программе
     res_y = 600
 
-    FPS = 60
+    FPS = 30
     FONTSIZE = 18
     BORDSIZE = 2
-    COL_BG_MAIN = BLACK
+    COL_BG_MAIN = BLACK  # !Работает только для строки статуса, т.е. через жопу
 
     ST_B_DELIM_TH = 3  # Толщина разделителя статусбара
     ST_B_DELIM_COL = GRAY  # Цвет разделителя статусбара
@@ -187,6 +184,7 @@ class Colors:
         self.mscr.fill(self.COL_BG_MAIN)
         self.font = pg.font.SysFont('arial', self.FONTSIZE)
         self.max_fontsize_x, self.max_fontsize_y = self.__render_colnames()
+        self.__last_ca = None
 
         self.res_x = self.__calc_res_x(self.COLS_IN_ROW)
 
@@ -207,7 +205,7 @@ class Colors:
         140 / 5 = 28.0
         140 / 7 = 20.0
         """
-        return (self.max_fontsize_x + self.BORDSIZE + 1) * num_in_row
+        return (self.max_fontsize_x + self.BORDSIZE) * num_in_row + self.BORDSIZE * 2
 
     def __render_colnames(self) -> tuple:
         """ Рендерит названия цветов, добавляет их в словарь и возвращает максимальный необходимый размер в пикселях """
@@ -224,13 +222,42 @@ class Colors:
                 maxy = cury
         return maxx, maxy
 
-    @staticmethod
-    def _get_opposite_color(inp_tuple) -> tuple:
-        res = tuple([255 - v for v in inp_tuple])
+
+    # @staticmethod
+    # def __get_opposite_col_hsv(h, s, v, a):
+    #     if h >= 180:
+    #         h -= 180
+    #     else:
+    #         h += 180
+    #     s = abs((v * s) / (v * (s - 1) + 1))
+    #     v = abs(v * (s - 1) + 1)
+    #     if s > 100: s = 100
+    #     if v > 100: v = 100
+    #     print(h, s, v, a)
+    #     return h, s, v, a
+
+    def hilo(self, a, b, c):
+        if c < b:
+            b, c = c, b
+        if b < a:
+            a, b = b, a
+        if c < b:
+            b, c = c, b
+        return a + c
+
+    def complement(self, r, g, b):
+        k = self.hilo(r, g, b)
+        return tuple(k - u for u in (r, g, b))
+
+    def _get_opposite_color(self, inp_tuple) -> tuple:
+        # res = tuple([255 - v for v in inp_tuple])
+        print(*inp_tuple, end=' -> ')
+        res = self.complement(*inp_tuple)
+        print(*res)
         return res
 
     def _init_colrects(self):
-        curx, cury = self.BORDSIZE, self.BORDSIZE
+        curx, cury = self.BORDSIZE + self.BORDSIZE // 2, self.BORDSIZE
         for clr in self.colors.keys():
             r = pg.Rect(curx, cury, self.max_fontsize_x, self.max_fontsize_y)
             self.colors[clr][self.I_BGRECT] = r
@@ -249,17 +276,20 @@ class Colors:
             surf.blit(self.colors[cl][self.I_FONTSURF], fg_rect)
             self.mscr.blit(surf, bg_rect.topleft)
 
-    def _on_click(self):
+    def _on_left_down(self, pos):
+        ...
+
+    def on_left_release(self, pos):
         ...
 
     def _on_cover(self, pos):
         for k, v in self.colors.items():
             colarea = self.colors[k][self.I_BGRECT]
-            if colarea.collidepoint(pos):
+            if colarea.collidepoint(pos) and colarea is not self.__last_ca:
                 r, g, b = self.colors[k][self.I_COLVAL]
                 stattxt = f'{k}: {r = }, {g = }, {b = }'
                 self._refresh_statbar(stattxt)
-
+                self.__last_ca = colarea
 
     def _refresh_statbar(self, txt, img: pg.Rect=None):
         capt = self.font.render(txt, True, self.ST_B_TXT_COL, self.COL_BG_MAIN)
@@ -284,7 +314,7 @@ class Colors:
                     running = False
                     break
                 if ev.type == pg.MOUSEBUTTONDOWN:
-                    self._on_click()
+                    self._on_left_down(pg.mouse.get_pos())
             if pg.mouse.get_focused():
                 self._on_cover(pg.mouse.get_pos())
             fps_clock.tick(self.FPS)
