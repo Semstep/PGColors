@@ -223,37 +223,22 @@ class Colors:
         return maxx, maxy
 
 
-    # @staticmethod
-    # def __get_opposite_col_hsv(h, s, v, a):
-    #     if h >= 180:
-    #         h -= 180
-    #     else:
-    #         h += 180
-    #     s = abs((v * s) / (v * (s - 1) + 1))
-    #     v = abs(v * (s - 1) + 1)
-    #     if s > 100: s = 100
-    #     if v > 100: v = 100
-    #     print(h, s, v, a)
-    #     return h, s, v, a
-
-    def hilo(self, a, b, c):
-        if c < b:
-            b, c = c, b
-        if b < a:
-            a, b = b, a
-        if c < b:
-            b, c = c, b
-        return a + c
-
-    def complement(self, r, g, b):
-        k = self.hilo(r, g, b)
-        return tuple(k - u for u in (r, g, b))
+    @staticmethod
+    def __get_opposite_col_hsv(h, s, v, a):
+        if h >= 180:
+            h -= 180
+        else:
+            h += 180
+        s = abs((v * s) / (v * (s - 1) + 1))
+        v = abs(v * (s - 1) + 1)
+        if s > 100: s = 100
+        if v > 100: v = 100
+        print(h, s, v, a)
+        return h, s, v, a
 
     def _get_opposite_color(self, inp_tuple) -> tuple:
+        res = [0 if v > 128 else 255 for v in inp_tuple]
         # res = tuple([255 - v for v in inp_tuple])
-        print(*inp_tuple, end=' -> ')
-        res = self.complement(*inp_tuple)
-        print(*res)
         return res
 
     def _init_colrects(self):
