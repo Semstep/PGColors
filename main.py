@@ -144,26 +144,33 @@ WHITE = (255, 255, 255)
 
 
 class Colors:
+    """
+
+    """
     res_x = 800
     res_y = 600
 
     FPS = 60
     FONTSIZE = 18
     BORDSIZE = 2
-    I_COLVAL, I_BGRECT, I_FONTSURF = 0, 1, 2  # позиции в основном словаре colors для значений цветов
+    COL_BG_MAIN = BLACK
 
-    ST_B_DELIM_TH = 3  #
-    ST_B_DELIM_COL = GRAY
+    ST_B_DELIM_TH = 3  # Толщина разделителя статусбара
+    ST_B_DELIM_COL = GRAY  # Цвет разделителя статусбара
+    ST_B_HEIGHT = FONTSIZE + 2
+    ST_B_TXT_COL = WHITE
+    st_b_rect: pg.Rect
 
     # SERV_AREA_H = 100  # высота области не занятая цветами
     COLS_IN_ROW = 7  # цветов в ряду на экране. Всего их 140, квадратно будет 4х35, 5х28, 7х20
     """
     Основное хранилище {str: [(int, int, int), pg.Rect фон, pg.Surface надпись)]
-    Название цвета (глобальные константы модуля, которые набраны капсом), 
+    Название цвета (по сути, глобальные константы модуля, которые набраны капсом), 
     кортеж R, G, B, прямоугольная область, где отображается цвет, 
     отрендереный шрифт с названием цвета
     """
     colors: dict
+    I_COLVAL, I_BGRECT, I_FONTSURF = 0, 1, 2  # позиции в основном словаре colors для значений цветов
 
     max_fontsize_x: int
     max_fontsize_y: int
@@ -177,6 +184,7 @@ class Colors:
         pg.init()
 
         self.mscr = pg.display.set_mode((self.res_x, self.res_y))
+        self.mscr.fill(self.COL_BG_MAIN)
         self.font = pg.font.SysFont('arial', self.FONTSIZE)
         self.max_fontsize_x, self.max_fontsize_y = self.__render_colnames()
 
@@ -187,9 +195,11 @@ class Colors:
         self.mscr = pg.display.set_mode((self.res_x, self.res_y))
         pg.display.set_caption('Примеры цветов модуля')
 
-        self._statbar_hght = self.max_fontsize_y + self.BORDSIZE + self.ST_B_DELIM_TH
+        self.st_b_rect = pg.Rect(0, self.res_y - (self.max_fontsize_y + self.BORDSIZE),
+                                 self.res_x, (self.max_fontsize_y + self.BORDSIZE))
 
         self._render_colors()
+        self._show_serv_delim()
 
     def __calc_res_x(self, num_in_row: int):
         """ 140 цветов, можно размещать (квадратней всего)
@@ -242,20 +252,30 @@ class Colors:
     def _on_click(self):
         ...
 
-    def _on_cover(self):
-        ...
+    def _on_cover(self, pos):
+        for k, v in self.colors.items():
+            colarea = self.colors[k][self.I_BGRECT]
+            if colarea.collidepoint(pos):
+                r, g, b = self.colors[k][self.I_COLVAL]
+                stattxt = f'{k}: {r = }, {g = }, {b = }'
+                self._refresh_statbar(stattxt)
 
-    def _refresh_statbar(self, txt):
-        ...
 
-    def _show_serv_part(self):
-        spos = (0, self.res_y - self._statbar_hght)
-        epos = (self.res_x, self.res_y - self._statbar_hght)
+    def _refresh_statbar(self, txt, img: pg.Rect=None):
+        capt = self.font.render(txt, True, self.ST_B_TXT_COL, self.COL_BG_MAIN)
+        pos = self.st_b_rect.x + self.BORDSIZE, self.st_b_rect.y + self.BORDSIZE
+        self.mscr.fill(self.COL_BG_MAIN, rect=self.st_b_rect)
+        self.mscr.blit(capt, pos)
+        pg.display.update(self.st_b_rect)
+
+    def _show_serv_delim(self):
+        spos = (0, self.res_y - self.st_b_rect.height - self.ST_B_DELIM_TH // 2)
+        epos = (self.res_x, self.res_y - self.st_b_rect.height - self.ST_B_DELIM_TH // 2)
         pg.draw.line(self.mscr, LIGHTGRAY, spos, epos, self.ST_B_DELIM_TH)
 
     def run(self):
         fps_clock = pg.time.Clock()
-        self._show_serv_part()
+        self._refresh_statbar('This is statusbar')
         running = True
         while running:
             pg.display.update()
@@ -266,7 +286,7 @@ class Colors:
                 if ev.type == pg.MOUSEBUTTONDOWN:
                     self._on_click()
             if pg.mouse.get_focused():
-                self._on_cover()
+                self._on_cover(pg.mouse.get_pos())
             fps_clock.tick(self.FPS)
         pg.quit()
 
