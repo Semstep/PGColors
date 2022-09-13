@@ -1,5 +1,5 @@
 import pygame as pg
-from typing import List
+#from typing import List
 
 BLACK = (0, 0, 0)
 NAVY = (0, 0, 128)
@@ -148,7 +148,7 @@ class Colors:
     res_y = 600
 
     FPS = 60
-    FONTSIZE = 16
+    FONTSIZE = 18
     BORDSIZE = 2
     I_COLVAL, I_BGRECT, I_FONTSURF = 0, 1, 2  # позиции в основном словаре colors для значений цветов
 
@@ -165,8 +165,6 @@ class Colors:
     """
     colors: dict
 
-    fontsurfs: List[pg.Surface]
-    colsurfs: List[pg.Rect]
     max_fontsize_x: int
     max_fontsize_y: int
 
@@ -180,8 +178,6 @@ class Colors:
 
         self.mscr = pg.display.set_mode((self.res_x, self.res_y))
         self.font = pg.font.SysFont('arial', self.FONTSIZE)
-        self.fonts_areas = []
-        self.fontsurfs, self.colsurfs = [], []
         self.max_fontsize_x, self.max_fontsize_y = self.__render_colnames()
 
         self.res_x = self.__calc_res_x(self.COLS_IN_ROW)
