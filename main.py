@@ -146,15 +146,19 @@ WHITE = (255, 255, 255)
 class Colors:
     RES_X = 800
     RES_Y = 600
-    FONTSIZE = 21
+    FPS = 60
+    FONTSIZE = 16
     BORDSIZE = 2
+    COLVAL, BGRECT, FONTSURF = 0, 1, 2  # позиции в основном словаре colors для значений цветов
+    ST_B_DELIM_TH = 3  #
+    ST_B_DELIM_COL = GRAY
+    colors: dict  # """{str: [(int, int, int), pg.Surface фон, pg.Surface надпись)]}"""
     fontsurfs: List[pg.Surface]
     colsurfs: List[pg.Rect]
     max_fontsize_x: int
     max_fontsize_y: int
-    colors: dict  # """{str: [(int, int, int), pg.Surface фон, pg.Surface надпись)]}"""
-    COLVAL, BGSURF, FONTSURF = 0, 1, 2  # позиции в основном словаре colors
     fonts_areas: list  # прямоугольники для областей в которых выводится цвет на подложке, для реакции на мышь
+
 
     def __init__(self):
         self.colors = {}
@@ -164,12 +168,16 @@ class Colors:
 
         pg.init()
 
-        self.font = pg.font.Font(None, self.FONTSIZE)
+        self.mscr = pg.display.set_mode((self.RES_X, self.RES_Y))
+        self.font = pg.font.SysFont('arial', self.FONTSIZE)
         self.fonts_areas = []
         self.mscr = pg.display.set_mode((self.RES_X, self.RES_Y))
         pg.display.set_caption('Примеры цветов модуля')
         self.fontsurfs, self.colsurfs = [], []
         self.max_fontsize_x, self.max_fontsize_y = self.__render_colnames()
+
+        self._statbar_hght = self.max_fontsize_y + self.BORDSIZE + self.ST_B_DELIM_TH
+
         self._init_colrects()
         self._render_colors()
 
@@ -197,7 +205,7 @@ class Colors:
         curx, cury = self.BORDSIZE, self.BORDSIZE
         for clr in self.colors.keys():
             r = pg.Rect(curx, cury, self.max_fontsize_x, self.max_fontsize_y)
-            self.colors[clr][self.BGSURF] = r
+            self.colors[clr][self.BGRECT] = r
             if curx + self.max_fontsize_x * 2 + self.BORDSIZE * 2 > self.RES_X:
                 curx = self.BORDSIZE
                 cury += self.max_fontsize_y + self.BORDSIZE
@@ -206,25 +214,44 @@ class Colors:
 
     def _render_colors(self):
         for cl in self.colors.keys():
-            bg_rect = self.colors[cl][self.BGSURF]
+            bg_rect = self.colors[cl][self.BGRECT]
             surf = pg.Surface(bg_rect.size)
             surf.fill(globals()[cl])
             fg_rect = self.colors[cl][self.FONTSURF].get_rect(center=(bg_rect.width // 2, bg_rect.height // 2))
             surf.blit(self.colors[cl][self.FONTSURF], fg_rect)
             self.mscr.blit(surf, bg_rect.topleft)
 
-    def show(self):
-        running = True
+    def _on_click(self):
+        ...
 
-        pg.display.update()
+    def _on_cover(self):
+        ...
+
+    def _refresh_statbar(self, txt):
+        ...
+
+    def _show_serv_part(self):
+        spos = (0, self.RES_Y - self._statbar_hght)
+        epos = (self.RES_X, self.RES_Y - self._statbar_hght)
+        pg.draw.line(self.mscr, LIGHTGRAY, spos, epos, self.ST_B_DELIM_TH)
+
+    def run(self):
+        fps_clock = pg.time.Clock()
+        self._show_serv_part()
+        running = True
         while running:
+            pg.display.update()
             for ev in pg.event.get():
                 if ev.type == pg.QUIT:
-                    pg.quit()
                     running = False
                     break
-
+                if ev.type == pg.MOUSEBUTTONDOWN:
+                    self._on_click()
+            if pg.mouse.get_focused():
+                self._on_cover
+            fps_clock.tick(self.FPS)
+        pg.quit()
 
 if __name__ == '__main__':
     clrs = Colors()
-    clrs.show()
+    clrs.run()
