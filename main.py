@@ -174,18 +174,18 @@ class Colors:
         self._render_colors()
 
     def __render_colnames(self) -> tuple:
-        """ Рендерит названия цветов в список и возвращает максимальный необходимый размер в пикселях """
+        """ Рендерит названия цветов, добавляет их в словарь и возвращает максимальный необходимый размер в пикселях """
         maxx, maxy = 0, 0
         for colname in self.colors.keys():
             bgcol = globals()[colname]
-            curname = self.font.render(colname.capitalize(), True,
-                                       self._get_opposite_color(bgcol), bgcol)
-            curx, cury = curname.get_size()
+            rendered_name = self.font.render(colname.capitalize(), True,
+                                             self._get_opposite_color(bgcol), bgcol)
+            self.colors[colname][self.FONTSURF] = rendered_name
+            curx, cury = rendered_name.get_size()
             if maxx < curx:
                 maxx = curx
             if maxy < cury:
                 maxy = cury
-            self.fontsurfs.append(curname)
         return maxx, maxy
 
     @staticmethod
@@ -205,15 +205,17 @@ class Colors:
                 curx += self.max_fontsize_x + self.BORDSIZE
 
     def _render_colors(self):
-        for cl in self.colors:
-            rct = self.colors[cl][self.BGSURF]
-            surf = pg.Surface(rct.size)
+        for cl in self.colors.keys():
+            bg_rect = self.colors[cl][self.BGSURF]
+            surf = pg.Surface(bg_rect.size)
             surf.fill(globals()[cl])
-            self.mscr.blit(surf, rct.topleft)
+            fg_rect = self.colors[cl][self.FONTSURF].get_rect(center=(bg_rect.width // 2, bg_rect.height // 2))
+            surf.blit(self.colors[cl][self.FONTSURF], fg_rect)
+            self.mscr.blit(surf, bg_rect.topleft)
 
     def show(self):
         running = True
-        self._render_colors()
+
         pg.display.update()
         while running:
             for ev in pg.event.get():
