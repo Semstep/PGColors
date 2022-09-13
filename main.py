@@ -229,17 +229,20 @@ class Colors:
             h -= 180
         else:
             h += 180
-        s = abs((v * s) / (v * (s - 1) + 1))
-        v = abs(v * (s - 1) + 1)
-        if s > 100: s = 100
-        if v > 100: v = 100
-        print(h, s, v, a)
-        return h, s, v, a
+        s /= 100
+        v /= 100
+        t = v * (s - 1) + 1
+        if t == 0: t = 0.0001
+        s = (v * s) / t
+        v = v * (s - 1) + 1
+        return h, s * 100, v * 100, a
 
     def _get_opposite_color(self, inp_tuple) -> tuple:
-        res = [0 if v > 128 else 255 for v in inp_tuple]
+        # res = [0 if v > 128 else 255 for v in inp_tuple]
         # res = tuple([255 - v for v in inp_tuple])
-        return res
+        clr = pg.Color(inp_tuple)
+        clr.hsva = self.__get_opposite_col_hsv(*clr.hsva)
+        return clr.r, clr.g, clr.b
 
     def _init_colrects(self):
         curx, cury = self.BORDSIZE + self.BORDSIZE // 2, self.BORDSIZE
