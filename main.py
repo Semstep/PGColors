@@ -1,6 +1,5 @@
 import pygame as pg
 #from typing import List
-from typing import Tuple
 
 BLACK = (0, 0, 0)
 NAVY = (0, 0, 128)
@@ -260,16 +259,10 @@ class Colors:
     def on_left_release(self, pos):
         ...
 
-    def _get_covered(self, pos) -> str:
+    def _on_cover(self, pos):
         for k, v in self.colors.items():
             colarea = self.colors[k][self.I_BGRECT]
-            if colarea.collidepoint(pos):
-                return k
-            return None
-
-    def _on_cover(self):
-            colrect = self._get_covered()
-            if self.__last_ca is not colrect:
+            if colarea.collidepoint(pos) and colarea is not self.__last_ca:
                 r, g, b = self.colors[k][self.I_COLVAL]
                 stattxt = f'{k}: {r = }, {g = }, {b = }'
                 self._refresh_statbar(stattxt)
@@ -300,7 +293,7 @@ class Colors:
                 if ev.type == pg.MOUSEBUTTONDOWN:
                     self._on_left_down(pg.mouse.get_pos())
             if pg.mouse.get_focused():
-                self._get_covered(pg.mouse.get_pos())
+                self._on_cover(pg.mouse.get_pos())
             fps_clock.tick(self.FPS)
         pg.quit()
 
