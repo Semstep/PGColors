@@ -1,5 +1,6 @@
 import pygame as pg
 #from typing import List
+from typing import Tuple
 
 BLACK = (0, 0, 0)
 NAVY = (0, 0, 128)
@@ -155,11 +156,14 @@ class Colors:
     ST_B_DELIM_TH = 3  # Толщина разделителя статусбара
     ST_B_DELIM_COL = GRAY  # Цвет разделителя статусбара
     ST_B_HEIGHT = FONTSIZE + 2
+    st_b_width: int  # ширина строки статуса
+
     ST_B_TXT_COL = WHITE
     st_b_rect: pg.Rect
 
     # SERV_AREA_H = 100  # высота области не занятая цветами
     COLS_IN_ROW = 7  # цветов в ряду на экране. Всего их 140, квадратно будет 4х35, 5х28, 7х20
+    ROWS_IN_COL = 140 / COLS_IN_ROW
     """
     Основное хранилище {str: [(int, int, int), pg.Rect фон, pg.Surface надпись)]
     Название цвета (по сути, глобальные константы модуля, которые набраны капсом), 
@@ -187,6 +191,7 @@ class Colors:
         self.__last_ca = None
 
         self.res_x = self.__calc_res_x(self.COLS_IN_ROW)
+        self.st_b_width = self.res_x
 
         self._init_colrects()
 
@@ -194,9 +199,9 @@ class Colors:
         pg.display.set_caption('Примеры цветов модуля')
 
         self.st_b_rect = pg.Rect(0, self.res_y - (self.max_fontsize_y + self.BORDSIZE),
-                                 self.res_x, (self.max_fontsize_y + self.BORDSIZE))
+                                 self.st_b_width, (self.max_fontsize_y + self.BORDSIZE))
 
-        self._render_colors()
+        self._render_clrs_capts()
         self._show_serv_delim()
 
     def __calc_res_x(self, num_in_row: int):
@@ -206,6 +211,9 @@ class Colors:
         140 / 7 = 20.0
         """
         return (self.max_fontsize_x + self.BORDSIZE) * num_in_row + self.BORDSIZE * 2
+
+    def __calc_res_y(self, num_in_col):
+        return
 
     def __render_colnames(self) -> tuple:
         """ Рендерит названия цветов, добавляет их в словарь и возвращает максимальный необходимый размер в пикселях """
@@ -222,27 +230,9 @@ class Colors:
                 maxy = cury
         return maxx, maxy
 
-
-    @staticmethod
-    def __get_opposite_col_hsv(h, s, v, a):
-        if h >= 180:
-            h -= 180
-        else:
-            h += 180
-        s /= 100
-        v /= 100
-        t = v * (s - 1) + 1
-        if t == 0: t = 0.0001
-        s = (v * s) / t
-        v = v * (s - 1) + 1
-        return h, s * 100, v * 100, a
-
-    def _get_opposite_color(self, inp_tuple) -> tuple:
-        # res = [0 if v > 128 else 255 for v in inp_tuple]
-        # res = tuple([255 - v for v in inp_tuple])
-        clr = pg.Color(inp_tuple)
-        clr.hsva = self.__get_opposite_col_hsv(*clr.hsva)
-        return clr.r, clr.g, clr.b
+    def _get_contrast_color(self, inp_tuple) -> tuple:
+        res = tuple(0 if v >= 128 else 255 for v in inp_tuple)
+        return res
 
     def _init_colrects(self):
         curx, cury = self.BORDSIZE + self.BORDSIZE // 2, self.BORDSIZE
@@ -255,7 +245,7 @@ class Colors:
             else:
                 curx += self.max_fontsize_x + self.BORDSIZE
 
-    def _render_colors(self):
+    def _render_clrs_capts(self):
         for cl in self.colors.keys():
             bg_rect = self.colors[cl][self.I_BGRECT]
             surf = pg.Surface(bg_rect.size)
@@ -270,10 +260,16 @@ class Colors:
     def on_left_release(self, pos):
         ...
 
-    def _on_cover(self, pos):
+    def _get_covered(self, pos) -> str:
         for k, v in self.colors.items():
             colarea = self.colors[k][self.I_BGRECT]
-            if colarea.collidepoint(pos) and colarea is not self.__last_ca:
+            if colarea.collidepoint(pos):
+                return k
+            return None
+
+    def _on_cover(self):
+            colrect = self._get_covered()
+            if self.__last_ca is not colrect:
                 r, g, b = self.colors[k][self.I_COLVAL]
                 stattxt = f'{k}: {r = }, {g = }, {b = }'
                 self._refresh_statbar(stattxt)
@@ -304,7 +300,7 @@ class Colors:
                 if ev.type == pg.MOUSEBUTTONDOWN:
                     self._on_left_down(pg.mouse.get_pos())
             if pg.mouse.get_focused():
-                self._on_cover(pg.mouse.get_pos())
+                self._get_covered(pg.mouse.get_pos())
             fps_clock.tick(self.FPS)
         pg.quit()
 
