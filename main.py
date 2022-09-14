@@ -147,7 +147,7 @@ class Colors:
     res_x = 800  # Разрешение основного окна по Х пересчитывается в программе
     res_y = 600
 
-    FPS = 30
+    FPS = 10
     FONTSIZE = 18
     BORDSIZE = 2
     COL_BG_MAIN = BLACK  # !Работает только для строки статуса, т.е. через жопу
@@ -203,6 +203,9 @@ class Colors:
         self._render_clrs_capts()
         self._show_serv_delim()
 
+        self.debugtext = 'Примеры цветов'
+        self.debugctr = 0
+
     def __calc_res_x(self, num_in_row: int):
         """ 140 цветов, можно размещать (квадратней всего)
         140 / 4 = 35.0
@@ -220,7 +223,7 @@ class Colors:
         for colname in self.colors.keys():
             bgcol = globals()[colname]
             rendered_name = self.font.render(colname.capitalize(), True,
-                                             self._get_opposite_color(bgcol), bgcol)
+                                             self._get_contrast_color(bgcol), bgcol)
             self.colors[colname][self.I_FONTSURF] = rendered_name
             curx, cury = rendered_name.get_size()
             if maxx < curx:
@@ -262,17 +265,23 @@ class Colors:
     def _on_cover(self, pos):
         for k, v in self.colors.items():
             colarea = self.colors[k][self.I_BGRECT]
-            if colarea.collidepoint(pos) and colarea is not self.__last_ca:
-                r, g, b = self.colors[k][self.I_COLVAL]
-                stattxt = f'{k}: {r = }, {g = }, {b = }'
-                self._refresh_statbar(stattxt)
-                self.__last_ca = colarea
+            if colarea.collidepoint(pos):
+                if colarea is not self.__last_ca:
+                    r, g, b = self.colors[k][self.I_COLVAL]
+                    stattxt = f'{k}: {r = }, {g = }, {b = }'
+                    self._refresh_statbar(stattxt)
+                    self.__last_ca = colarea
+
+        if not self.__last_ca:
+            self._refresh_statbar('')
 
     def _refresh_statbar(self, txt, img: pg.Rect=None):
         capt = self.font.render(txt, True, self.ST_B_TXT_COL, self.COL_BG_MAIN)
         pos = self.st_b_rect.x + self.BORDSIZE, self.st_b_rect.y + self.BORDSIZE
         self.mscr.fill(self.COL_BG_MAIN, rect=self.st_b_rect)
         self.mscr.blit(capt, pos)
+        self.debugctr += 1
+        self.debugtext = str(self.debugctr)
         pg.display.update(self.st_b_rect)
 
     def _show_serv_delim(self):
@@ -288,12 +297,14 @@ class Colors:
             pg.display.update()
             for ev in pg.event.get():
                 if ev.type == pg.QUIT:
+                    pos = pg.mouse.get_pos()
                     running = False
                     break
                 if ev.type == pg.MOUSEBUTTONDOWN:
                     self._on_left_down(pg.mouse.get_pos())
             if pg.mouse.get_focused():
                 self._on_cover(pg.mouse.get_pos())
+            pg.display.set_caption(self.debugtext)
             fps_clock.tick(self.FPS)
         pg.quit()
 
@@ -301,3 +312,7 @@ class Colors:
 if __name__ == '__main__':
     clrs = Colors()
     clrs.run()
+
+"""
+Статусбар стирается раз за обновление пока не наведется в первый раз на прямоугольник с цветом 
+"""
